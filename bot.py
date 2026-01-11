@@ -51,12 +51,16 @@ async def last(update, context):
 
 def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
+
+    app.add_handler(CommandHandler("ping", ping))
     app.add_handler(CommandHandler("last", last))
+
     app.run_polling()
+
 
 if __name__ == "__main__":
     main()
+
 
 
 
