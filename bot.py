@@ -1,72 +1,49 @@
-from telegram.ext import ApplicationBuilder, CommandHandler
-from coingecko import fetch_daily_prices
-from indicators import last_ma_breakouts
-import os
+from telegram import Update
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    ContextTypes,
+)
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+from config import BOT_TOKEN
+from coingecko import fetch_daily_prices
+from indicators import last_ma_breakout
 
 COINS = {
-    "BTC": "bitcoin",
-    "ETH": "ethereum",
-    "SOL": "solana"
+    "btc": "bitcoin",
+    "eth": "ethereum",
+    "sol": "solana",
 }
 
-async def start(update, context):
-    await update.message.reply_text(
-        "Send:\n/last BTC\n/last ETH\n/last SOL"
-    )
-
-async def last(update, context):
+async def last(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text("Usage: /last BTC")
+        await update.message.reply_text("Usage: /last btc")
         return
 
-    symbol = context.args[0].upper()
+    symbol = context.args[0].lower()
     if symbol not in COINS:
-        await update.message.reply_text("Unsupported coin.")
+        await update.message.reply_text("Unsupported coin")
         return
 
     df = fetch_daily_prices(COINS[symbol])
-    direction, time = last_ma200_breakout(df)
 
-    ma50, ma200 = last_ma_breakouts(df)
+    ma50 = last_ma_breakout(df, 50)
+    ma200 = last_ma_breakout(df, 200)
 
-    lines = [symbol]
+    msg = f"{symbol.upper()} (Daily)\n"
+    msg += f"50 MA breakout: {ma50 or 'Not in last 365 days'}\n"
+    msg += f"200 MA breakout: {ma200 or 'Not in last 365 days'}"
 
-    if ma50:
-        arrow = "🟢 ABOVE" if ma50[0] == "ABOVE" else "🔴 BELOW"
-        lines.append(f"{arrow} MA50  — {ma50[1].date()}")
+    await update.message.reply_text(msg)
 
-    if ma200:
-        arrow = "🟢 ABOVE" if ma200[0] == "ABOVE" else "🔴 BELOW"
-        lines.append(f"{arrow} MA200 — {ma200[1].date()}")
-
-    if len(lines) == 1:
-        await update.message.reply_text("No MA50 or MA200 breakout found.")
-        return
-
-    await update.message.reply_text("\n".join(lines))
-
-
-from telegram import Update
-from telegram.ext import ContextTypes
+def main():
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
+    app.add_handler(CommandHandler("ping", ping))
+    app.add_handler(CommandHandler("last", last))
+    app.run_polling()
 
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("PONG")
 
-def main():
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
-
-    app.add_handler(CommandHandler("ping", ping))
-    app.add_handler(CommandHandler("last", last))
-
-    app.run_polling()
-
-
 if __name__ == "__main__":
     main()
-
-
-
-
-
