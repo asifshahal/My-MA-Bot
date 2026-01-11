@@ -9,7 +9,7 @@ HEADERS = {
     "x-cg-demo-api-key": API_KEY
 }
 
-def fetch_daily_prices(coin_id, days=400):
+def fetch_daily_prices(coin_id, days=365):
     url = f"https://api.coingecko.com/api/v3/coins/{coin_id}/market_chart"
     params = {
         "vs_currency": "usd",
@@ -27,3 +27,4 @@ def fetch_daily_prices(coin_id, days=400):
     df["time"] = df["time"].astype(int)
     df["close"] = df["close"].astype(float)
     return df
+
