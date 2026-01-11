@@ -1,30 +1,28 @@
 import requests
 import pandas as pd
-import os
+from config import COINGECKO_API_KEY
 
-API_KEY = os.getenv("COINGECKO_API_KEY")
+BASE = "https://api.coingecko.com/api/v3"
 
 HEADERS = {
     "accept": "application/json",
-    "x-cg-demo-api-key": API_KEY
+    "x-cg-pro-api-key": COINGECKO_API_KEY
 }
 
-def fetch_daily_prices(coin_id, days=365):
-    url = f"https://api.coingecko.com/api/v3/coins/{coin_id}/market_chart"
+def fetch_daily_prices(coin_id):
+    url = f"{BASE}/coins/{coin_id}/market_chart"
     params = {
         "vs_currency": "usd",
-        "days": days,
+        "days": 365,
         "interval": "daily"
     }
 
-    r = requests.get(url, params=params, headers=HEADERS, timeout=20)
+    r = requests.get(url, headers=HEADERS, params=params, timeout=15)
     data = r.json()
 
     if "prices" not in data:
         raise RuntimeError(data)
 
-    df = pd.DataFrame(data["prices"], columns=["time", "close"])
-    df["time"] = df["time"].astype(int)
-    df["close"] = df["close"].astype(float)
-    return df
-
+    df = pd.DataFrame(data["prices"], columns=["ts", "close"])
+    df["date"] = pd.to_datetime(df["ts"], unit="ms")
+    return df[["date", "close"]]
