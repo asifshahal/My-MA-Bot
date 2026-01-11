@@ -1,6 +1,6 @@
 from telegram.ext import ApplicationBuilder, CommandHandler
 from coingecko import fetch_daily_prices
-from indicators import last_ma200_breakout
+from indicators import last_ma_breakouts
 import os
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -47,3 +47,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
