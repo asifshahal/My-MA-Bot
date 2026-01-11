@@ -48,6 +48,11 @@ async def last(update, context):
     await update.message.reply_text("\n".join(lines))
 
 
+from telegram import Update
+from telegram.ext import ContextTypes
+
+async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("PONG")
 
 def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
@@ -60,6 +65,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
