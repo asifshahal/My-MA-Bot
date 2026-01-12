@@ -40,21 +40,33 @@ from alerts import load_alerts, save_alerts
 from coingecko import fetch_daily_prices
 from scanner import check_breakout
 from coins import COINS
+from telegram.error import BadRequest, Forbidden
 
 async def daily_alerts(context):
     alerts = load_alerts()
 
-    for chat_id, symbols in alerts.items():
+    for chat_id, symbols in list(alerts.items()):
         for sym in symbols:
+            if sym not in COINS:
+                continue
+
             df = fetch_daily_prices(COINS[sym])
 
             for ma in (50, 200):
                 signal = check_breakout(df, ma)
-                if signal:
+                if not signal:
+                    continue
+
+                try:
                     await context.bot.send_message(
                         chat_id=int(chat_id),
                         text=f"{sym.upper()} {signal.replace('_', ' ')} MA{ma} (Daily)"
                     )
+                except (BadRequest, Forbidden):
+                    alerts.pop(chat_id, None)
+                    save_alerts(alerts)
+                    break
+
 async def check_cmd(update, context):
     if not context.args:
         await update.message.reply_text("Usage: /check btc")
@@ -175,6 +187,7 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 if __name__ == "__main__":
     main()
+
 
 
 
