@@ -36,6 +36,26 @@ async def last(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(msg)
 
+from alerts import load_alerts, save_alerts
+from coingecko import fetch_daily_prices
+from scanner import check_breakout
+from coins import COINS
+
+async def daily_alerts(context):
+    alerts = load_alerts()
+
+    for chat_id, symbols in alerts.items():
+        for sym in symbols:
+            df = fetch_daily_prices(COINS[sym])
+
+            for ma in (50, 200):
+                signal = check_breakout(df, ma)
+                if signal:
+                    await context.bot.send_message(
+                        chat_id=int(chat_id),
+                        text=f"{sym.upper()} {signal.replace('_', ' ')} MA{ma} (Daily)"
+                    )
+
 def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("ping", ping))
@@ -47,3 +67,4 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 if __name__ == "__main__":
     main()
+
