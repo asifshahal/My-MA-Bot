@@ -88,19 +88,22 @@ def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("ping", ping))
     app.add_handler(CommandHandler("last", last))
-    app.run_polling()
+    app.add_handler(CommandHandler("alerts", alerts_cmd))
+
     app.job_queue.run_repeating(
     daily_alerts,
     interval=86400,
     first=10
     )
-    app.add_handler(CommandHandler("alerts", alerts_cmd))
+    app.run_polling()
+
 
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("PONG")
 
 if __name__ == "__main__":
     main()
+
 
 
 
