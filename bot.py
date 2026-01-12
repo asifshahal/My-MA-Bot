@@ -56,6 +56,34 @@ async def daily_alerts(context):
                         text=f"{sym.upper()} {signal.replace('_', ' ')} MA{ma} (Daily)"
                     )
 
+async def alerts_cmd(update, context):
+    alerts = load_alerts()
+    chat = str(update.effective_chat.id)
+
+    if len(context.args) < 2:
+        await update.message.reply_text("Usage: /alerts on btc")
+        return
+
+    action, symbol = context.args[0], context.args[1].lower()
+
+    if symbol not in COINS:
+        await update.message.reply_text("Unknown coin")
+        return
+
+    alerts.setdefault(chat, [])
+
+    if action == "on":
+        if symbol not in alerts[chat]:
+            alerts[chat].append(symbol)
+        await update.message.reply_text(f"Alerts enabled for {symbol.upper()}")
+
+    elif action == "off":
+        alerts[chat] = [s for s in alerts[chat] if s != symbol]
+        await update.message.reply_text(f"Alerts disabled for {symbol.upper()}")
+
+    save_alerts(alerts)
+
+
 def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("ping", ping))
@@ -66,12 +94,13 @@ def main():
     interval=86400,
     first=10
     )
-
+    app.add_handler(CommandHandler("alerts", alerts_cmd))
 
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("PONG")
 
 if __name__ == "__main__":
     main()
+
 
 
